@@ -1,0 +1,345 @@
+---
+title: "Impact of food availability, larval concentration and light on P. lividus larval growth - data analysis"
+output:
+  word_document:
+    keep_md: true
+    fig_caption: true
+  html_document: default
+  pAl_df_document: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      dev = "tiff",
+                      dpi = 300)
+```
+
+
+
+```{r loading libraries, message=FALSE, warning=FALSE}
+library('dplyr')
+library('readr')
+library('ggplot2')
+library('ggdist')
+library('knitr')
+library('tidyr')
+library('emmeans')
+library('rstan')
+rstan::rstan_options(auto_write = TRUE)
+library('brms')
+options(mc.cores = parallel::detectCores())  # run all cores
+library('bayesplot')
+library('marginaleffects')
+library('ggdist')
+```
+
+
+```{r}
+nchain = 4
+niter  = 2500
+moment_matching = TRUE
+```
+
+
+# 1. Data overview
+Making a dataset containing only the data on __P. lividus__
+
+```{r import data}
+Pl_df <-  read_delim("larval_morphology.csv", delim = ",",
+                  col_types = "fffnfiffffiniif")
+Pl_df = drop_na(Pl_df, length)
+# make Pl_df$larva by concatenating Pl_df$species with Pl_df$larva 
+Pl_df$larva <- as.factor(paste0(Pl_df$species, Pl_df$larva))
+Pl_df <- Pl_df[Pl_df$species == "Pl",]
+Pl_df <- Pl_df[Pl_df$length > 0,]
+Pl_df <- Pl_df[! is.na(Pl_df$length),]
+#ensure correct order for levels
+Pl_df<-Pl_df %>% mutate(lit = factor(lit, levels = c("DD", "LD", "LL")))
+Pl_df<-Pl_df %>% mutate(rod = factor(rod, levels = c("BR", "PO", "ALA")))
+
+print(paste0('There are ', dim(Pl_df)[1], ' measures from ', length(unique(Pl_df$larva)), ' individual larvae.'))
+```
+
+```{r}
+head(Pl_df)
+```
+
+For the statistical analysis a few transformation are required. First
+both length and larvae concentration (lar_ml) are scaled (L and C respectively). 
+```{r scaling variables}
+meanL <- mean(Pl_df$length)
+sdL <- sd(Pl_df$length)
+meanC <- mean(Pl_df$lar_ml)
+sdC <- sd(Pl_df$lar_ml)
+Pl_df$L  <- as.numeric(scale(Pl_df$length))
+Pl_df$C  <- as.numeric(scale(Pl_df$lar_ml))
+Pl_df <- droplevels(Pl_df) # drop factor levels which are absent
+head(Pl_df)
+```
+
+The chunk below produces a data summary for each condition. In column n we calculated also the number of observations.
+
+```{r data summary}
+Pl_df %>% group_by(species,dpf, condition, lit,lar_ml, rod, fed ) %>%
+  summarise(mean = mean(length, na.rm = TRUE), stdev = sd(length, na.rm = TRUE),
+            n = n())
+```
+
+# 2.  Experimental set-up and aim 
+
+We are interested in investigating how the light dark
+cycle (lit) and the larval concentration (lar_ml) influence the phenotypic response to food availability (fed): larvae grow much shorter arms when food is abundant to save maternal storages; on the contrary, when food is scarce they develop much longer arms to maximize their capability to collect food. Three sets of spicules have been measured (rod): Body Rod (BR), Post Oral (PO), and Anterolateral (ALA) arms .
+
+
+## PLOT DATA OVERVIEW
+
+```{r ligt and lar_ml, fig.height=6, fig.width= 7}
+plot1<- Pl_df %>%
+  ggplot(aes(y=length,x=as.factor(lar_ml), fill=fed)) +
+  facet_grid(lit~rod ) + 
+     geom_boxplot(position = position_dodge(width = 0.75)) +
+    geom_jitter(position = position_jitterdodge(jitter.width = 0.25, dodge.width = 0.75), size=0.7)+ 
+  scale_fill_manual(values=c("#00BBC1", "#F86D63"))+
+ #geom_violin()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) +
+  ggtitle("P. lividus, light and larval concentration impact on phenotypic response")  
+
+plot1
+```
+
+
+```{r light impact, fig.height=5, fig.width= 7}
+Pl_df %>%
+  ggplot(aes(y=length,x=rod, fill=lit, )) +
+    facet_grid(fed~lar_ml) + 
+    geom_boxplot(position = position_dodge(width = 0.75)) +
+    geom_jitter(position = position_jitterdodge(jitter.width = 0.25, dodge.width = 0.75), size=0.7)+
+    scale_fill_manual(values=c("#7473d1", "#f5b905","#d62222"))+
+ #geom_violin()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) +
+  ggtitle("P. lividus, impact of light on larval growth")  
+```
+
+
+```{r fig.height=5, fig.width= 7}
+Pl_df %>%
+  ggplot(aes(y=length,x=rod, fill=lit, )) +
+    facet_grid(~fed) + 
+    geom_boxplot(position = position_dodge(width = 0.75)) +
+    geom_jitter(position = position_jitterdodge(jitter.width = 0.25, dodge.width = 0.75), size=0.7)+
+    scale_fill_manual(values=c("#7473d1", "#f5b905","#d62222" )) +
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) +
+  ggtitle("P. lividus, impact of light on larval growth")  
+```
+
+
+```{r fig.height=5, fig.width= 7}
+Pl_df %>%
+  filter(lar_ml==12.5) %>% 
+  ggplot(aes(y=length,x=rod, fill=lit, )) +
+    facet_grid(~fed) + 
+    geom_boxplot(position = position_dodge(width = 0.75)) +
+    geom_jitter(position = position_jitterdodge(jitter.width = 0.25, dodge.width = 0.75), size=0.7)+
+    scale_fill_manual(values=c("#7473d1", "#f5b905","#d62222" ))+
+ #geom_violin()+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) +
+  ggtitle("P. lividus, impact of light on larval growth at 12.5 larvae/ml")  
+```
+
+
+# 3. Statistics
+
+## Prior preditive test
+
+Set priors on slope. Weakly informative priors are used to guide the model.
+
+## M0 Single intercept
+
+Each treatment should be replicated sufficiently within each larva to capture the treatment effect accurately. Typically, having at least 3-5 measurements per treatment per larva can provide a reasonable balance between model complexity and data sufficiency.
+
+Ideally, we would represent the data as a nested structure, with larvae nested within species. This would allow us to estimate the variance components for the species and larva levels. However, given the low number of measures per larva, it might be challenging to estimate these variance components reliably. Therefore, we will start with a simpler model that includes only the larva level as a random effect.
+
+```{r}
+get_prior(bf(L ~  1 + (1|larva), sigma ~ 1), data=Pl_df)
+```
+
+
+```{r si_priors}
+si_priors <- c(
+  set_prior("normal(0, 0.5)", class = "Intercept"),  # prior for intercept
+  set_prior("student_t(3, 0, 0.5)", class = "sd"), 
+  set_prior("student_t(3, 0, 0.5)", class = "sd", group = "larva"), # Student's t prior for group-level sd
+  set_prior("student_t(3, 0, 0.5)", dpar = "sigma", class = "Intercept")  # Student's t prior for residual SD
+)
+```
+
+
+The zeroth model is built to check the effect of the group level and see how the data is distributed overall. The nesting structure explicitly acknowledges the hierarchical nature of the data. This helps to avoid pseudoreplication and ensures that the estimates of variance components are not biased.
+
+
+```{r Pl_intercept_mod, message=FALSE}
+Pl_intercept_mod <- brm(
+  bf(L ~ 1 + (1|larva), sigma ~ 1), 
+  family = gaussian,
+  data=Pl_df, prior = si_priors,
+  chains = nchain, 
+  iter = niter, warmup = niter/2,
+   save_pars = save_pars(all = TRUE)
+  )
+Pl_intercept_mod
+```
+
+
+```{r}
+get_prior(bf(L ~  rod + (1|larva), sigma ~ rod), data=Pl_df)
+```
+
+
+
+```{r}
+priors <- c(
+  set_prior("student_t(5, 0, 2)", class = "Intercept"),  #  prior for intercept
+  set_prior("normal(0, 2)", class = "b"),   
+
+  set_prior("student_t(3, 0, 0.5)", class = "sd", group = "larva"),  
+
+  set_prior("student_t(5, 0, 2)", dpar = "sigma", class = "Intercept"),  # prior for residual sd
+  set_prior("normal(0, 1)", class = "b", dpar="sigma")
+)
+```
+
+
+### M1 Rod model
+
+```{r Pl_rod_mod, message=FALSE}
+Pl_rod_mod <- brm(
+  bf(L ~  rod + (1|larva), sigma ~ rod), 
+  family = gaussian,
+  data=Pl_df, prior = priors,
+  chains = nchain,
+  iter = niter, warmup = niter/2,
+   save_pars = save_pars(all = TRUE)
+  )
+Pl_rod_mod
+```
+
+### M2 C Rod model
+
+```{r Pl_rod_C_mod, message=FALSE}
+Pl_rod_C_mod <- brm(
+  bf(L ~  rod*C + (1|larva), sigma ~ rod), 
+  family = gaussian,
+  data=Pl_df, prior = priors,
+  chains = nchain,
+  iter = niter, warmup = niter/2,
+  save_pars = save_pars(all = TRUE)
+  )
+Pl_rod_C_mod
+```
+
+
+### M3 C Rod Fed model
+
+```{r Pl_rod_C_fed_mod, message=FALSE}
+Pl_rod_C_fed_mod <- brm(
+  bf(L ~  rod*C*fed + (1|larva), sigma ~ rod*fed), 
+  family = gaussian,
+  data=Pl_df, prior = priors,
+  chains = nchain,
+  iter = niter, warmup = niter/2,
+   save_pars = save_pars(all = TRUE)
+  )
+Pl_rod_C_fed_mod
+```
+
+
+### M4 C Rod Lit model
+
+```{r Pl_rod_C_lit_mod, message=FALSE}
+Pl_rod_C_lit_mod <- brm(
+  bf(L ~  rod*C*lit + (1|larva), sigma ~ rod*lit), 
+  family = gaussian,
+  data=Pl_df, prior = priors,
+  chains = nchain,
+  iter = niter, warmup = niter/2,
+   save_pars = save_pars(all = TRUE)
+  )
+Pl_rod_C_lit_mod
+```
+
+### M5 C Rod Fed Lit model
+
+```{r Pl_rod_C_fed_lit_mod, message=FALSE}
+Pl_rod_C_fed_lit_mod <- brm(
+  bf(L ~  rod*C*fed*lit + (1|larva), sigma ~ rod*fed*lit),
+  family = gaussian,
+  data=Pl_df, prior = priors,
+  chains = nchain,
+  iter = niter, warmup = niter/2,
+  save_pars = save_pars(all = TRUE)
+  )
+Pl_rod_C_fed_lit_mod
+```
+
+
+# 4. Models evaluation using LOO
+
+
+```{r loo}
+Pl_intercept_mod = add_criterion(Pl_intercept_mod,criterion = "loo",
+                              moment_match = TRUE, reloo = TRUE)
+Pl_rod_mod = add_criterion(Pl_rod_mod, criterion = "loo",
+                              moment_match = TRUE, reloo = TRUE)
+Pl_rod_C_mod = add_criterion(Pl_rod_C_mod, criterion = "loo",
+                              moment_match = TRUE, reloo = TRUE)
+Pl_rod_C_lit_mod = add_criterion(Pl_rod_C_lit_mod, criterion = "loo",
+                              moment_match = TRUE, reloo = TRUE)
+Pl_rod_C_fed_mod = add_criterion(Pl_rod_C_fed_mod, criterion = "loo",
+                              moment_match = TRUE, reloo = TRUE)
+Pl_rod_C_fed_lit_mod = add_criterion(Pl_rod_C_fed_lit_mod, criterion = "loo",
+                              moment_match = TRUE, reloo = TRUE)
+```
+
+
+
+```{r}
+# Perform LOO comparison
+loo_results <- loo_compare(Pl_intercept_mod,
+                           Pl_rod_mod, 
+                           Pl_rod_C_mod, 
+                           Pl_rod_C_fed_mod,
+                           Pl_rod_C_lit_mod,
+                           Pl_rod_C_fed_lit_mod
+                           )
+
+loo_results
+```
+
+```{r}
+kable(loo_results)
+```    
+
+```{r}
+best_model_name <- rownames(loo_results)[1]
+best_model <- get(best_model_name)
+
+# Save the best model to an RDS file
+saveRDS(best_model, file = paste0(
+  "./model_objects/", best_model_name, ".rds"))
+
+# Print the name of the best model
+print(paste("The best model is:", best_model_name))
+```
+
+```{r}
+# Save the brms model to an RDS file
+#saveRDS(best_model, file = paste0("./model_objects/", best_model_name, ".rds"))
+```
+

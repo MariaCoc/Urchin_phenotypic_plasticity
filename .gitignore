@@ -1,0 +1,45 @@
+# Compiled Object files
+*.o
+*.obj
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.a
+*.lib
+
+# Executables
+*.exe
+
+# DUB
+.dub
+docs.json
+__dummy.html
+
+
+# Code coverage
+*.lst
+
+## R Language
+*.RData
+*.RDataTmp
+*.Rhistory
+*.Rprofile
+*.Rproj
+*.Rproj.user/
+.Rproj.user
+renv/
+*.rds
+
+## Other binaries
+*.docx
+*/figure-docx/
+
+
+# Directories
+model_objects/*
+docs/
+

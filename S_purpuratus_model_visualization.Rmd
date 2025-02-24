@@ -1,0 +1,276 @@
+---
+title: "Impact of food availability and light on S. purpuratus larval growth - model visualization"
+output:
+  html_document:
+        keep_md: false
+    fig_caption: true
+  pdf_document: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r loading libraries, message=FALSE, warning=FALSE}
+library('dplyr')
+library('readr')
+library('ggplot2')
+library('ggdist')
+library('knitr')
+library('tidyr')
+library('emmeans')
+library('rstan')
+rstan::rstan_options(auto_write = TRUE)
+library('brms')
+options(mc.cores = parallel::detectCores())  # run all cores
+library('bayesplot')
+library('marginaleffects')
+library('ggdist')
+```
+
+
+```{r unscale_outcome}
+unscale_outcome <- function(x){
+  x = (x * sdL) + meanL
+}
+```
+
+
+# 1. Data overview
+
+Making a dataset containing only the data on __S. purpuratus__
+
+```{r import data}
+Sp_df <-  read_delim("larval_morphology.csv", delim = ",",
+                  col_types = "fffnfiffffiniif")
+Sp_df = drop_na(Sp_df, length)
+# make Pl_df$larva by concatenating Pl_df$species with Pl_df$larva 
+Sp_df$larva <- as.factor(paste0(Sp_df$species, Sp_df$larva))
+Sp_df <- Sp_df[Sp_df$species == "Sp",]
+Sp_df <- Sp_df[Sp_df$length > 0,]
+Sp_df <- Sp_df[! is.na(Sp_df$length),]
+#ensure correct order for levels
+Sp_df<-Sp_df %>% mutate(lit = factor(lit, levels = c("DD", "LD", "LL")))
+Sp_df<-Sp_df %>% mutate(rod = factor(rod, levels = c("BR", "PO", "ALA")))
+
+print(paste0('There are ', dim(Sp_df)[1], ' measures from ', length(unique(Sp_df$larva)), ' individual larvae.'))
+```
+
+```{r}
+head(Sp_df)
+```
+
+```{r scaling variables}
+meanL <- mean(Sp_df$length)
+sdL <- sd(Sp_df$length)
+
+Sp_df$L  <- as.numeric(scale(Sp_df$length))
+
+Sp_df <- droplevels(Sp_df) # drop factor levels which are absent
+head(Sp_df)
+```
+
+
+# 2. Load best model
+
+
+```{r}
+dir.create("model_objects", showWarnings = FALSE)
+
+url <- "https://github.com/MariaCoc/Phen_plast_2024/releases/download/v1.0.0/Sp_rod_fed_lit_mod.rds"
+local_file <- file.path("model_objects", "Sp_rod_fed_lit_mod.rds")
+
+if (!file.exists(local_file)) {
+  download.file(url, local_file, mode = "wb") 
+}
+
+Sp_rod_fed_lit_mod <- readRDS('model_objects/Sp_rod_fed_lit_mod.rds')
+Sp_rod_fed_lit_mod
+```
+
+
+
+# 3. Marginaleffects plot with avg_predictions
+
+```{r}
+preds_df <- marginaleffects::avg_predictions(Sp_rod_fed_lit_mod,
+                  newdata = datagrid(fed = unique(Sp_df$fed),
+                            lit = unique(Sp_df$lit),
+                            rod = unique(Sp_df$rod),
+                            condition = unique(Sp_df$condition)
+                            ),
+                  by = c("lit","condition", "rod","fed"),
+                  transform = unscale_outcome,
+                  re_formula = NA
+                  )
+
+preds_df
+```
+
+
+```{r}
+kable(as.data.frame(preds_df))
+```
+
+
+```{r fig.height=5, fig.width= 10}
+ggplot() +
+  # Add original data points
+  geom_jitter(data = Sp_df, aes(x = rod, y = length, color = fed), 
+              position = position_jitterdodge(jitter.width = 0.25, dodge.width = 0.5), 
+              size = 1, alpha = 0.4) +
+  scale_colour_manual(values = c("#00BBC1", "#F86D63"), name = "Individual measures") +
+  
+  # Facet by specific variables of interest
+  facet_grid(condition~lit) +
+  
+  # Add the avg_predictions and error bars (95% CI)
+  geom_point(data = preds_df, aes(x = rod, y = estimate, fill = fed),  # Use "response" column
+             size = 2, position = position_dodge(width = 0.5)) +
+  geom_errorbar(data = preds_df, aes(x = rod, ymin = conf.low, ymax = conf.high, fill = fed),
+                width = 0.2, size = 0.7, position = position_dodge(width = 0.5)) +
+  scale_fill_manual(values = c("black", "black"), name = "avg_predictions") +
+  
+  # Customize plot
+  labs(title = "avg_predictions for fed, conditioned on lit, treatment and rod",
+       y = "Length in um", x = "Skeletal rod") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 11), 
+        axis.title = element_text(size = 13), 
+        legend.title = element_text(size = 13),
+        strip.text = element_text(size = 13),
+        plot.title = element_text(size = 17, face = "bold"))
+
+```
+
+```{r fig.height=5, fig.width= 10}
+ggplot() +
+  # Add original data points
+  geom_jitter(data = Sp_df, aes(x = condition, y = length, color = fed), 
+              position = position_jitterdodge(jitter.width = 0.25, dodge.width = 0.5), 
+              size = 1, alpha = 0.4) +
+  scale_colour_manual(values = c("#00BBC1", "#F86D63"), name = "Individual measures") +
+  
+  # Facet by specific variables of interest
+  facet_grid(lit~rod) +
+  
+  # Add the avg_predictions and error bars (95% CI)
+  geom_point(data = preds_df, aes(x = condition, y = estimate, fill = fed),  # Use "response" column
+             size = 2, position = position_dodge(width = 0.5)) +
+  geom_errorbar(data = preds_df, aes(x = condition, ymin = conf.low, ymax = conf.high, fill = fed),
+                width = 0.2, size = 0.7, position = position_dodge(width = 0.5)) +
+  scale_fill_manual(values = c("black", "black"), name = "avg_predictions") +
+  
+  # Customize plot
+  labs(title = "avg_predictions for fed, conditioned on lit, treatment and rod",
+       y = "Length in um", x = "Skeletal rod") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 11), 
+        axis.title = element_text(size = 13), 
+        legend.title = element_text(size = 13),
+        strip.text = element_text(size = 13),
+        plot.title = element_text(size = 17, face = "bold"))
+
+```
+
+```{r fig.height=5, fig.width= 10}
+ggplot() +
+  # Add original data points
+  geom_jitter(data = Sp_df, aes(x = rod, y = length, color = lit), 
+              position = position_jitterdodge(jitter.width = 0.25, dodge.width = 0.5), 
+              size = 1, alpha = 0.6) +
+  scale_colour_manual(values = c("#7473d1", "#f5b905","#d62222"), name= "Individual measures") +
+  
+  # Add the avg_predictions and error bars (95% CI)
+  geom_point(data = preds_df, aes(x = rod, y = estimate, fill = lit), 
+             size = 2, position = position_dodge(width = 0.5)) +
+  geom_errorbar(data = preds_df, aes(x = rod, ymin = conf.low, ymax = conf.high, fill=lit), 
+                width = 0.2, size = 0.7, position = position_dodge(width = 0.5)) +
+  scale_fill_manual(values = c("black", "black", "black"), name="avg_predictions") +
+  
+ # Facet by specific variables of interest
+  facet_grid(fed~condition ) +
+  
+  # Customize plot
+  labs(title = "avg_predictions for lit, conditioned on fed, treatment and rod",
+       y = "Length um", x = "rod") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 11), 
+        axis.title = element_text(size = 13), 
+        legend.title = element_text(size = 13),
+        strip.text = element_text(size = 13),
+        plot.title = element_text(size = 17, face = "bold"))
+```
+
+```{r fig.height=5, fig.width= 10}
+ggplot() +
+  # Add original data points with jittering
+  geom_jitter(data = Sp_df, aes(x = condition, y = length, color = lit), 
+              position = position_jitterdodge(jitter.width = 0.25, dodge.width = 0.5), 
+              size = 1, alpha = 0.6) +
+  scale_colour_manual(values = c("#7473d1", "#f5b905","#d62222"), name= "Individual measures") +
+  
+  # Add the avg_predictions and error bars (95% CI)
+  geom_point(data = preds_df, aes(x = condition, y = estimate, fill = lit), 
+             size = 2, position = position_dodge(width = 0.5)) +
+  geom_errorbar(data = preds_df, aes(x = condition, ymin = conf.low, ymax = conf.high, fill=lit), 
+                width = 0.2, size = 0.7, position = position_dodge(width = 0.5)) +
+  scale_fill_manual(values = c("black", "black", "black"), name="avg_predictions") +
+  
+  # Facet by specific variables of interest
+  facet_grid(fed~rod ) +
+  
+  # Customize plot
+  labs(title = "avg_predictions for lit, conditioned on fed, treatment and rod",
+       y = "Length um", x = "rod") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 11), 
+        axis.title = element_text(size = 13), 
+        legend.title = element_text(size = 13),
+        strip.text = element_text(size = 13),
+        plot.title = element_text(size = 17, face = "bold"))
+```
+
+
+# 4. Test the hypothesis that longer arms in LD are due too the fact that larvae were feeding more then in DD
+
+```{r}
+summary_ate_DD <- Sp_df%>%
+  filter(fed=="Fed") %>% 
+                   group_by(lit, condition, fed, ate) %>%
+              tally() %>%
+              mutate(p = n / sum(n)*100) %>%
+              ungroup()
+                   
+
+                           
+summary_ate_DD
+```
+
+
+
+```{r fig.height=6, fig.width= 6}
+ Sp_df%>% 
+  filter(fed=="Fed")%>%
+  ggplot(aes(condition, fill=ate)) +
+  geom_bar(position = 'fill') +
+  facet_grid(rows= vars(lit))+
+  geom_text(data = . %>% 
+              group_by(lit, condition, fed, ate) %>%
+              tally() %>%
+              mutate(p = n / sum(n)) %>%
+              ungroup(),
+            aes(y = p, label = scales::percent(p)),
+            position = position_stack(vjust = 0.5),
+            show.legend = FALSE)+
+  ggtitle("Larvae having food in gut")+
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
