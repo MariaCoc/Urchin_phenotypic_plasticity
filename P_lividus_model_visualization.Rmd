@@ -77,7 +77,8 @@ head(Pl_df)
 ```{r}
 dir.create("model_objects", showWarnings = FALSE)
 
-url <- "https://github.com/MariaCoc/Phen_plast_2024/releases/download/v1.0.0/Pl_rod_C_fed_lit_mod.rds"
+url <- "https://github.com/MariaCoc/Urchin_phenotypic_plasticity/releases/download/v1.0.0/Pl_rod_C_fed_lit_mod.rds"
+
 local_file <- file.path("model_objects", "Pl_rod_C_fed_lit_mod.rds")
 
 if (!file.exists(local_file)) {
@@ -104,18 +105,17 @@ preds_df <- marginaleffects::avg_predictions(Pl_rod_C_fed_lit_mod,
 preds_df$lar_ml     <- (preds_df$C * sdC) + meanC 
 preds_df$lar_ml <- (preds_df$C * sdC) + meanC
 
-preds_df
+head(preds_df, 10)
 ```
 
 Check levels for lar_ml
 
 ```{r}
-preds_df$lar_ml
+unique(preds_df$lar_ml)
 ```
 
-```{r}
-kable(as.data.frame(preds_df))
-```
+We plot model predictions of the mean alongside the original data. The scaling and centering in the model has been reversed to show the predictions in the original scale. 
+
 
 ```{r fig.height=6, fig.width= 10}
 ggplot() +
@@ -146,6 +146,8 @@ ggplot() +
         plot.title = element_text(size = 17, face = "bold"))
 
 ```
+
+
 
 ```{r fig.height=6, fig.width= 10}
 ggplot() +
