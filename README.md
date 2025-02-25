@@ -4,7 +4,7 @@ Authors: Maria Cocurullo, John D. Kirwan, Maria Ina Arnone
  
 Department of Biology and Evolution of Marine Organisms, Stazione Zoologica Anton Dohrn, Naples, Italy
 
-Link to the paper: https://www.frontiersin.org/journals/ecology-and-evolution/articles/10.3389/fevo.2025.1548208/abstract 
+This repository contains statistical analysis relating to the paper [Phenotypic response to food availability in sea urchin larvae and impact of light during development and growth](https://www.frontiersin.org/journals/ecology-and-evolution/articles/10.3389/fevo.2025.1548208/). 
 
 # Abstract
 
