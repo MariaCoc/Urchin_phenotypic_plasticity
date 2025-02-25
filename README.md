@@ -37,4 +37,4 @@ renv::restore()
 ```
 For more info on renv: https://rstudio.github.io/renv/articles/renv.html
 
-The Stan code for the best model applied to each species is found in the stan_code directory.
+The Stan code for the best model applied to each species is found in the [stan_code](/stan_code/) directory.
