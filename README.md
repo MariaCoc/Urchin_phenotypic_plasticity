@@ -18,17 +18,17 @@ This respository contains:
 
 - The raw data representing measurements of larval body rods under differing experimental conditions: **larval_morphology.csv**
 
-- **A_lixula_mixeff_distributional.Rmd** contains **A. lixula** data analysis. 
+- **A_lixula_mixeff_distributional.Rmd** contains *A. lixula* data analysis. 
 
-- **A_lixula_model_visualization.Rmd** contains **A. lixula** data visualization. 
+- **A_lixula_model_visualization.Rmd** contains *A. lixula* data visualization. 
 
-- **P_lividus_mixeff_distributional.Rmd** contains **P. lividus** data analysis. 
+- **P_lividus_mixeff_distributional.Rmd** contains *P. lividus* data analysis. 
 
-- **P_lividus_model_visualization.Rmd** contains **P. lividus** data visualization.
+- **P_lividus_model_visualization.Rmd** contains *P. lividus* data visualization.
 
-- **S_purpuratus_mixeff_distributional.Rmd** contains **S. purpuratus** data analysis. 
+- **S_purpuratus_mixeff_distributional.Rmd** contains *S. purpuratus* data analysis. 
 
-- **S_purpuratus_model_visualization.Rmd** contains **S. purpuratus** data visualization.
+- **S_purpuratus_model_visualization.Rmd** contains *S. purpuratus* data visualization.
   
 - **renv.lock** this file records all the packages and their versions used in the project. It enables recreating the same environment on a different machine by reinstalling these packages. To restore the R package environment from renv.lock, run the following command in R:
 ```r
