@@ -147,6 +147,8 @@ ggplot() +
 
 ```
 
+The plot below shows the average predictions for the length of larvae in each condition and light regime. The error bars represent the 95% confidence interval.The scatter points correspond to the original data.The scaling and centering in the model has been reversed to show the predictions in the original scale. 
+
 ```{r fig.height=5, fig.width= 10}
 ggplot() +
   # Add original data points
@@ -177,6 +179,8 @@ ggplot() +
 
 ```
 
+The plot below shows the average predictions for the length of larvae in each condition and light regime. The error bars represent the 95% confidence interval.The scatter points correspond to the original data.The scaling and centering in the model has been reversed to show the predictions in the original scale. 
+
 ```{r fig.height=5, fig.width= 10}
 ggplot() +
   # Add original data points
@@ -205,6 +209,8 @@ ggplot() +
         strip.text = element_text(size = 13),
         plot.title = element_text(size = 17, face = "bold"))
 ```
+
+The plot below shows the average predictions for the length of larvae in each condition and light regime. The error bars represent the 95% confidence interval.The scatter points correspond to the original data.The scaling and centering in the model has been reversed to show the predictions in the original scale. 
 
 ```{r fig.height=5, fig.width= 10}
 ggplot() +
@@ -238,6 +244,8 @@ ggplot() +
 
 # 4. Test the hypothesis that longer arms in LD are due too the fact that larvae were feeding more than in DD
 
+The table below shows the proportion of larvae, which having bnen fed, having food in their gut (ate) or otherwise in each condition and light regime (lit). This derives from the raw data, not the predictive model.
+
 ```{r}
 summary_ate_DD <- Sp_df%>%
   filter(fed=="Fed") %>% 
@@ -249,7 +257,7 @@ summary_ate_DD <- Sp_df%>%
 summary_ate_DD
 ```
 
-The plots below show the proportion of larvae having food in their gut in each condition and light regime. This derives from the raw data, not the predictive model.
+The plots below show the proportion of fed larvae having food in their gut in each condition and light regime. This derives from the raw data, not the predictive model.
 
 ```{r fig.height=6, fig.width= 6}
 Sp_df%>% 
