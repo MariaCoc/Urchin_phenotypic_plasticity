@@ -18,17 +18,11 @@ This respository contains:
 
 - The raw data representing measurements of larval body rods under differing experimental conditions: **larval_morphology.csv**
 
-- **A_lixula_mixeff_distributional.Rmd** contains *A. lixula* data analysis. 
+- **A_lixula_mixeff_distributional.Rmd**, **P_lividus_mixeff_distributional.Rmd**, and  **S_purpuratus_mixeff_distributional.Rmd** contain data analysis for the three species, *A. lixula*, *P. lividus* and *S. purpuratus*, respectively. These include data summary, probabilsitic modelling using brms and Stan, prior predictive tests and model evaluation via LOO. A best model is chosen and the model formula is described.  
 
-- **A_lixula_model_visualization.Rmd** contains *A. lixula* data visualization. 
+- **A_lixula_model_visualization.Rmd**, **P_lividus_model_visualization.Rmd**, and **S_purpuratus_model_visualization.Rmd** contain visualization of the predictions of best models for the three species, juxtaposed with the original data.  
 
-- **P_lividus_mixeff_distributional.Rmd** contains *P. lividus* data analysis. 
-
-- **P_lividus_model_visualization.Rmd** contains *P. lividus* data visualization.
-
-- **S_purpuratus_mixeff_distributional.Rmd** contains *S. purpuratus* data analysis. 
-
-- **S_purpuratus_model_visualization.Rmd** contains *S. purpuratus* data visualization.
+- The six PDF documents represent 'knitted' versions of the R Markdown (Rmd) files listed above for which the code has been run.
   
 - **renv.lock** this file records all the packages and their versions used in the project. It enables recreating the same environment on a different machine by reinstalling these packages. To restore the R package environment from renv.lock, run the following command in R:
 ```r
