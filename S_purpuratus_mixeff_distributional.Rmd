@@ -1,23 +1,18 @@
 ---
 title: "Impact of food availability and light on S. purpuratus larval growth - data analysis"
 output:
-  word_document:
-    keep_md: true
+  pdf_document: default
+  html_document:
+    keep_md: false
     fig_caption: true
-  html_document: default
-  pAl_df_document: default
 editor_options:
   markdown:
     wrap: 72
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,
-                      dev = "tiff",
-                      dpi = 300)
+knitr::opts_chunk$set(echo = TRUE, dpi = 300)
 ```
-
-
 
 ```{r loading libraries, message=FALSE, warning=FALSE}
 library('dplyr')
@@ -36,17 +31,16 @@ library('marginaleffects')
 library('ggdist')
 ```
 
-
 ```{r}
 nchain = 4
 niter  = 2500
 moment_match = TRUE
 ```
 
-
 # 1. Data overview
 
-Making a dataset containing only the data on __S. purpuratus__
+Making a data set containing only the data on *S. purpuratus* larvae.
+
 ```{r import data}
 Sp_df <-  read_delim("larval_morphology.csv", delim = ",",
                   col_types = "fffnfiffffiniif")
@@ -67,7 +61,7 @@ print(paste0('There are ', dim(Sp_df)[1], ' measures from ', length(unique(Sp_df
 head(Sp_df)
 ```
 
-For the statistical analysis length needs to be scaled to L. 
+For the statistical analysis length needs to be scaled to L.
 
 ```{r scaling variables}
 meanL <- mean(Sp_df$length)
@@ -78,8 +72,8 @@ Sp_df <- droplevels(Sp_df) # drop factor levels which are absent
 head(Sp_df)
 ```
 
-
-The chunk below produces a data summary for each condition. In column n we calculated also the number of observations.
+The chunk below produces a data summary for each condition. In column n
+we calculated also the number of observations.
 
 ```{r data summary}
 Sp_df %>% group_by(species, dpf, lar_ml, lit, condition, fed) %>%
@@ -87,15 +81,20 @@ Sp_df %>% group_by(species, dpf, lar_ml, lit, condition, fed) %>%
             n = n())
 ```
 
+## Experimental setup and aim
 
+We are interested in investigating how the light-dark cycle (lit)
+influence the phenotypic response to food availability (fed): larvae
+grow much shorter arms when food is abundant enough to allow maternal storage;
+on the contrary, when food is scarce they develop much longer arms to
+maximize their capability to collect food. This response is controlled
+by a dopaminergic signalling. To interfere with this signalling we used
+an in inhibitor of the TH (one of the enzymes involved in the dopamine
+synthesis) and DMSO as negative control. Three sets of spicules have
+been measured: Body Rod (BR), Post Oral (PO), and Anterolateral (ALA)
+arms.
 
-## EXPERIMENTAL SETUP AND AIM
-
-We are interested in investigating how the light-dark 
-cycle (lit) influence the phenotypic response to food availability (fed): larvae grow much shorter arms when food is abundant to save maternal storages; on the contrary, when food is scarce they develop much longer arms to maximize their capability to collect food. This response is controlled by a dopaminergic signalling. To interfere with this signalling we used an in inhibitor of the TH (one of the enzymes involved in the dopamine synthesis) and DMSO as negative control. Three sets of spicules have been measured: Body Rod (BR), Post Oral (PO), and Anterolateral (ALA) arms .
-
-
-## PLOT DATA OVERVIEW
+## Plot data overview
 
 ```{r food impact, fig.height=5, fig.width= 7}
 Sp_df %>%
@@ -123,25 +122,30 @@ Sp_df %>%
   ggtitle("S. purpuratus, food and dopamine control on light response")  
 ```
 
-
 # 2. Statistics
 
-
-## PRIOR PREDICTIVE TEST
-
+## Prior predictive test
 
 ## M0 Single intercept
 
-Set priors on slope. Weakly informative priors are used to guide the model.
+Set priors on slope. Weakly informative priors are used to guide the
+model.
 
-Each treatment should be replicated sufficiently within each larva to capture the treatment effect accurately. Typically, having at least 3-5 measurements per treatment per larva can provide a reasonable balance between model complexity and data sufficiency.
+Each treatment should be replicated sufficiently within each larva to
+capture the treatment effect accurately. Typically, having at least 3-5
+measurements per treatment per larva can provide a reasonable balance
+between model complexity and data sufficiency.
 
-Ideally, we would represent the data as a nested structure, with larvae nested within species. This would allow us to estimate the variance components for the species and larva levels. However, given the low number of measures per larva, it might be challenging to estimate these variance components reliably. Therefore, we will start with a simpler model that includes only the larva level as a random effect.
+Ideally, we would represent the data as a nested structure, with larvae
+nested within species. This would allow us to estimate the variance
+components for the species and larva levels. However, given the low
+number of measures per larva, it might be challenging to estimate these
+variance components reliably. Therefore, we will start with a simpler
+model that includes only the larva level as a random effect.
 
 ```{r}
 get_prior(bf(L ~  1, sigma ~1), data=Sp_df)
 ```
-
 
 ```{r}
 si_priors <- c(
@@ -151,9 +155,11 @@ si_priors <- c(
 )
 ```
 
-
-The zeroth model is built to check the effect of the group level and see how the data is distributed overall. The nesting structure explicitly acknowledges the hierarchical nature of the data. This helps to avoid pseudoreplication and ensures that the estimates of variance components are not biased.
-
+The zeroth model is built to check the effect of the group level and see
+how the data is distributed overall. The nesting structure explicitly
+acknowledges the hierarchical nature of the data. This helps to avoid
+pseudoreplication and ensures that the estimates of variance components
+are not biased.
 
 ```{r message=FALSE}
 Sp_intercept_mod <- brm(
@@ -166,10 +172,10 @@ Sp_intercept_mod <- brm(
   )
 Sp_intercept_mod
 ```
+
 ```{r}
 get_prior(bf(L ~  rod, sigma ~ rod), data=Sp_df)
 ```
-
 
 ```{r}
 priors <- c(
@@ -181,8 +187,6 @@ priors <- c(
   set_prior("normal(0, 2)", class = "b", dpar = "sigma")
 )
 ```
-
-
 
 ## M1 Rod model
 
@@ -198,12 +202,9 @@ Sp_rod_mod <- brm(
 Sp_rod_mod
 ```
 
-
-
 ```{r}
 plot(Sp_rod_mod, ask=FALSE, variable = "^b_", regex = TRUE)
 ```
-
 
 ## M2 Rod Fed model
 
@@ -219,12 +220,9 @@ Sp_rod_fed_mod <- brm(
 Sp_rod_fed_mod
 ```
 
-
 ```{r}
 plot(Sp_rod_fed_mod, ask=FALSE, variable = "^b_", regex = TRUE)
 ```
-
-
 
 ## M3 Rod Lit model
 
@@ -277,8 +275,6 @@ Sp_rod_fed_lit_mod = add_criterion(Sp_rod_fed_lit_mod,
                         criterion = "loo", moment_match = moment_match, reloo = TRUE)
 ```
 
-
-
 ```{r}
 # Perform LOO comparison
 loo_results <- loo_compare(Sp_intercept_mod,
@@ -289,11 +285,6 @@ loo_results <- loo_compare(Sp_intercept_mod,
 loo_results
 ```
 
-
-
-```{r}
-kable(loo_results)
-```
 
 
 ```{r}
@@ -308,8 +299,71 @@ saveRDS(best_model, file = paste0(
 print(paste("The best model is:", best_model_name))
 ```
 
+## Model Equation
+
+The response variable follows a normal distribution:
+
+$$
+Y_i \sim \mathcal{N}(\mu_i, \sigma_i)
+$$
+
+where:
+
+**Linear Predictor for the Mean (**$\mu_i$):
+
+$$
+\mu_i = \beta_0 + X_{i} \boldsymbol{\beta} + u_{J_1[i]} Z_{1,i}
+$$
+
+-   $\beta_0$ (Intercept): The population-level intercept.
+
+-   $X_{i} \boldsymbol{\beta}$: Fixed effects (population-level
+    predictors) with centered design matrix.
+
+-   $u_{J_1[i]}$: Random effect for group-level predictor, where
+    $J_1[i]$ is the grouping index.
+
+-   $Z_{1,i}$: Group-level predictor values.
+
+-   $u_{J_1[i]}$ follows a normal distribution:
+
+    $$
+    u_{J_1[i]} \sim \mathcal{N}(0, \sigma_u)
+    $$
+
+    where $\sigma_u$ is the standard deviation of the group-level
+    effect.
+
+**Linear Predictor for the Standard Deviation (**$\sigma_i$):
+
+$$
+\log(\sigma_i) = \alpha_0 + X_{\sigma, i} \boldsymbol{\alpha}
+$$
+
+-   $\alpha_0$ (Intercept_sigma): Population-level intercept for the
+    variance structure.
+-   $X_{\sigma, i} \boldsymbol{\alpha}$: Fixed effects for the variance
+    model.
+
+**Prior Distributions:**
+
+$$
+\boldsymbol{\beta} \sim \mathcal{N}(0, 2), \quad \beta_0 \sim t_5(0,2)
+$$ 
+
+
+$$
+\boldsymbol{\alpha} \sim \mathcal{N}(0, 1), \quad \alpha_0 \sim t_5(0,2)
+$$ 
+
+$$
+\sigma_u \sim t_3(0,0.5)
+$$
+
+This model estimates both the mean and variance of the response variable
+($Y$), incorporating fixed and random effects while allowing for
+hierarchical structure in the data.
 
 ```{r}
 #saveRDS(best_model, file = paste0("./model_objects/", best_model_name, ".rds"))
 ```
-

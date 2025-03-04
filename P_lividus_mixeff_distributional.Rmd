@@ -1,20 +1,17 @@
 ---
 title: "Impact of food availability, larval concentration and light on P. lividus larval growth - data analysis"
 output:
-  word_document:
-    keep_md: true
+  pdf_document: default
+  html_document:
+    keep_md: false
     fig_caption: true
-  html_document: default
-  pAl_df_document: default
 editor_options:
   markdown:
     wrap: 72
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,
-                      dev = "tiff",
-                      dpi = 300)
+knitr::opts_chunk$set(echo = TRUE, dpi = 300)
 ```
 
 
@@ -45,7 +42,7 @@ moment_matching = TRUE
 
 
 # 1. Data overview
-Making a dataset containing only the data on __P. lividus__
+Making a data set containing only the data on *P. lividus*.
 
 ```{r import data}
 Pl_df <-  read_delim("larval_morphology.csv", delim = ",",
@@ -322,9 +319,7 @@ loo_results <- loo_compare(Pl_intercept_mod,
 loo_results
 ```
 
-```{r}
-kable(loo_results)
-```    
+  
 
 ```{r}
 best_model_name <- rownames(loo_results)[1]
@@ -337,6 +332,55 @@ saveRDS(best_model, file = paste0(
 # Print the name of the best model
 print(paste("The best model is:", best_model_name))
 ```
+
+## Model Equation
+
+The model assumes a normal distribution for the response variable:
+
+\[
+Y_i \sim \mathcal{N}(\mu_i, \sigma_i)
+\]
+
+where:
+
+**Linear Predictor for the Mean (\(\mu_i\)):**
+\[
+\mu_i = \beta_0 + X_{i} \boldsymbol{\beta} + u_{J_1[i]} Z_{1,i}
+\]
+
+- \(\beta_0\) (Intercept): The population-level intercept.
+- \(X_{i} \boldsymbol{\beta}\): Fixed effects (population-level predictors) with centered design matrix.
+- \(u_{J_1[i]}\): Random effect for group-level predictor, where \(J_1[i]\) is the grouping index.
+- \(Z_{1,i}\): Group-level predictor values.
+- \(u_{J_1[i]}\) follows a normal distribution:
+
+  \[
+  u_{J_1[i]} \sim \mathcal{N}(0, \sigma_u)
+  \]
+
+  where \(\sigma_u\) is the standard deviation of the group-level effect.
+
+**Linear Predictor for the Standard Deviation (\(\sigma_i\)):**
+\[
+\log(\sigma_i) = \alpha_0 + X_{\sigma, i} \boldsymbol{\alpha}
+\]
+
+- \(\alpha_0\) (Intercept_sigma): Population-level intercept for the variance structure.
+- \(X_{\sigma, i} \boldsymbol{\alpha}\): Fixed effects for the variance model.
+
+**Prior Distributions:**
+\[
+\boldsymbol{\beta} \sim \mathcal{N}(0, 2), \quad \beta_0 \sim t_5(0,2)
+\]
+\[
+\boldsymbol{\alpha} \sim \mathcal{N}(0, 1), \quad \alpha_0 \sim t_5(0,2)
+\]
+\[
+\sigma_u \sim t_3(0,0.5)
+\]
+
+This structure allows the model to estimate both the mean and the variance of growth (\(Y\)) while accounting for hierarchical effects from group-level predictors.
+
 
 ```{r}
 # Save the brms model to an RDS file

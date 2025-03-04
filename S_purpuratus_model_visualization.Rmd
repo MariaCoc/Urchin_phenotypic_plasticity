@@ -1,15 +1,14 @@
 ---
 title: "Impact of food availability and light on S. purpuratus larval growth - model visualization"
 output:
-  html_document:
-        keep_md: false
-    fig_caption: true
   pdf_document: default
+  html_document:
+    keep_md: false
+    fig_caption: true
 editor_options:
   markdown:
     wrap: 72
 ---
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

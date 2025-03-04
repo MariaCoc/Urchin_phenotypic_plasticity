@@ -1,16 +1,15 @@
 ---
-title: "Impact of food availability and light on A. lixula larval growth - data analysis
-  - model visualization"
+title: "Impact of food availability and light on A. lixula larval growth - data analysis - model visualization"
 output:
-  html_document:
-        keep_md: false
-    fig_caption: true
   pdf_document: default
+  html_document:
+    keep_md: false
+    fig_caption: true
 editor_options:
   markdown:
-    
     wrap: 72
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -40,7 +39,7 @@ unscale_outcome <- function(x){
 
 # 1. Data overview
 
-Making a dataset containing only the data pertaining to *A. lixula* at 6
+Making a data set containing only the data pertaining to *A. lixula* at 6
 dpf.
 
 ```{r import data}

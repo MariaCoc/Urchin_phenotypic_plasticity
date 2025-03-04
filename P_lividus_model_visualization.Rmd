@@ -1,10 +1,10 @@
 ---
 title: "Impact of food availability, larval concentratiion and light on P. lividus larval growth - model visualization"
 output:
+  pdf_document: default
   html_document:
     keep_md: false
     fig_caption: true
-  pdf_document: default
 editor_options:
   markdown:
     wrap: 72
@@ -12,7 +12,6 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
-                      dev = "tiff",
                       dpi = 300)
 ```
 
@@ -41,7 +40,7 @@ unscale_outcome <- function(x){
 
 # 1. Data overview
 
-Making a dataset containing only the data on **P. lividus**
+Making a data set containing only the data on **P. lividus**
 
 ```{r import data}
 Pl_df <-  read_delim("larval_morphology.csv", delim = ",",
@@ -114,8 +113,9 @@ Check levels for lar_ml
 unique(preds_df$lar_ml)
 ```
 
-We plot model predictions of the mean alongside the original data. The scaling and centering in the model has been reversed to show the predictions in the original scale. 
-
+We plot model predictions of the mean alongside the original data. The
+scaling and centering in the model has been reversed to show the
+predictions in the original scale.
 
 ```{r fig.height=6, fig.width= 10}
 ggplot() +
@@ -146,8 +146,6 @@ ggplot() +
         plot.title = element_text(size = 17, face = "bold"))
 
 ```
-
-
 
 ```{r fig.height=6, fig.width= 10}
 ggplot() +

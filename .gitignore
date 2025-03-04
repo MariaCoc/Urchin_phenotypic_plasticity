@@ -38,8 +38,9 @@ renv/
 *.docx
 */figure-docx/
 
-
 # Directories
 model_objects/*
 docs/
 
+/P_lividus_mixeff_distributional_files
+/S_purpuratus_mixeff_distributional_files
