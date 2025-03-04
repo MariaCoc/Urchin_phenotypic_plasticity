@@ -14,7 +14,7 @@ Phenotypic plasticity, the ability of a genotype to produce different phenotypes
 
 The statistical analysis was performed using [R](https://cran.r-project.org/) version 4.4.1 .
 
-This respository contains:
+This repository contains:
 
 - The raw data representing measurements of larval body rods under differing experimental conditions: **larval_morphology.csv**
 
@@ -22,7 +22,7 @@ This respository contains:
 
 - **A_lixula_model_visualization.Rmd**, **P_lividus_model_visualization.Rmd**, and **S_purpuratus_model_visualization.Rmd** contain visualization of the predictions of best models for the three species, juxtaposed with the original data.  
 
-- The six PDF documents represent 'knitted' versions of the R Markdown (Rmd) files listed above for which the code has been run.
+- The directory [pdfs](pdfs/) contains the six PDF documents represent 'knitted' versions of the R Markdown (Rmd) files listed above for which the code has been run.
 
 - The three .rds data files in [releases/download/v1.0.0/](releases/download/v1.0.0/) represent the model objects for the three species which are visualized in the *_model_visualization.Rmd files and described in the research article. 
   
