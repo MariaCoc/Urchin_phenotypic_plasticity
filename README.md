@@ -23,6 +23,8 @@ This respository contains:
 - **A_lixula_model_visualization.Rmd**, **P_lividus_model_visualization.Rmd**, and **S_purpuratus_model_visualization.Rmd** contain visualization of the predictions of best models for the three species, juxtaposed with the original data.  
 
 - The six PDF documents represent 'knitted' versions of the R Markdown (Rmd) files listed above for which the code has been run.
+
+- The three .rds data files in /releases/download/v1.0.0/ represent the model objects for the three species which are visualized in the *_model_visualization.Rmd files and described in the research article. 
   
 - **renv.lock** this file records all the packages and their versions used in the project. It enables recreating the same environment on a different machine by reinstalling these packages. To restore the R package environment from renv.lock, run the following command in R:
 ```r
